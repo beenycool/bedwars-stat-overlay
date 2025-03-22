@@ -37,7 +37,27 @@ public class StyleManager {
     }
 
     public void applyCustomStyle() {
-        // Apply custom styles from configManager
-        // Example: background color, border color, font size, etc.
+        String backgroundColor = configManager.getString("hud.style.backgroundColor", "#000000");
+        String borderColor = configManager.getString("hud.style.borderColor", "#FFFFFF");
+        int fontSize = configManager.getInt("hud.style.fontSize", 12);
+
+        // Apply background color
+        GlStateManager.color(
+                Integer.valueOf(backgroundColor.substring(1, 3), 16) / 255.0f,
+                Integer.valueOf(backgroundColor.substring(3, 5), 16) / 255.0f,
+                Integer.valueOf(backgroundColor.substring(5, 7), 16) / 255.0f,
+                1.0f
+        );
+
+        // Apply border color
+        GlStateManager.color(
+                Integer.valueOf(borderColor.substring(1, 3), 16) / 255.0f,
+                Integer.valueOf(borderColor.substring(3, 5), 16) / 255.0f,
+                Integer.valueOf(borderColor.substring(5, 7), 16) / 255.0f,
+                1.0f
+        );
+
+        // Apply font size
+        fontRenderer.FONT_HEIGHT = fontSize;
     }
 }

@@ -9,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.LinkedBlockingQueue;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HypixelAPI implements StatProvider {
     private static final String API_URL = "https://api.hypixel.net/player";
@@ -49,8 +51,31 @@ public class HypixelAPI implements StatProvider {
         });
     }
 
-    private String makeApiRequest(String playerName) throws IOException {
-        URL url = new URL(API_URL + "?key=" + apiKey + "&name=" + playerName);
+    public void fetchTopPlayers(StatCallback callback) {
+        apiPool.execute(() -> {
+            int attempts = 0;
+            while (attempts < MAX_RETRIES) {
+                try {
+                    String response = makeApiRequest("topplayers");
+                    callback.onSuccess(parseTopPlayers(response));
+                    return;
+                } catch (IOException e) {
+                    attempts++;
+                    if (attempts >= MAX_RETRIES) {
+                        callback.onError(e);
+                    } else {
+                        try {
+                            Thread.sleep(RETRY_DELAY);
+                        } catch (InterruptedException ignored) {
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private String makeApiRequest(String endpoint) throws IOException {
+        URL url = new URL(API_URL + "?key=" + apiKey + "&name=" + endpoint);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
         connection.setRequestProperty("Accept", "application/json");
@@ -77,5 +102,21 @@ public class HypixelAPI implements StatProvider {
         stats.setLosses(playerObject.get("stats").getAsJsonObject().get("Bedwars").getAsJsonObject().get("losses_bedwars").getAsInt());
 
         return stats;
+    }
+
+    private List<PlayerStats> parseTopPlayers(String response) {
+        JsonObject jsonObject = JsonParser.parseString(response).getAsJsonObject();
+        List<PlayerStats> topPlayers = new ArrayList<>();
+
+        for (JsonObject playerObject : jsonObject.getAsJsonArray("players")) {
+            PlayerStats stats = new PlayerStats();
+            stats.setPlayerName(playerObject.get("displayname").getAsString());
+            stats.setFkdr(playerObject.get("achievements").getAsJsonObject().get("bedwars_final_k_d").getAsDouble());
+            stats.setWins(playerObject.get("stats").getAsJsonObject().get("Bedwars").getAsJsonObject().get("wins_bedwars").getAsInt());
+            stats.setLosses(playerObject.get("stats").getAsJsonObject().get("Bedwars").getAsJsonObject().get("losses_bedwars").getAsInt());
+            topPlayers.add(stats);
+        }
+
+        return topPlayers;
     }
 }

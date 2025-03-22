@@ -50,4 +50,18 @@ public class Leaderboard {
     public void updateTopPlayers(List<StatProvider.PlayerStats> topPlayers) {
         this.topPlayers = topPlayers;
     }
+
+    public void fetchAndDisplayTopPlayers() {
+        statProvider.fetchTopPlayers(new StatProvider.StatCallback() {
+            @Override
+            public void onSuccess(List<StatProvider.PlayerStats> stats) {
+                updateTopPlayers(stats);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
 }

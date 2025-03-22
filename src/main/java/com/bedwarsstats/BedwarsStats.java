@@ -5,6 +5,7 @@ import com.bedwarsstats.commands.StatsCommand;
 import com.bedwarsstats.config.ConfigManager;
 import com.bedwarsstats.input.KeyBindManager;
 import com.bedwarsstats.ui.HUDRenderer;
+import com.bedwarsstats.ui.Leaderboard;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -22,23 +23,26 @@ public class BedwarsStats {
     private ConfigManager configManager;
     private HypixelAPI hypixelAPI;
     private HUDRenderer hudRenderer;
+    private Leaderboard leaderboard;
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         configManager = new ConfigManager();
         hypixelAPI = new HypixelAPI(configManager.getString("api.key", ""));
         hudRenderer = new HUDRenderer();
+        leaderboard = new Leaderboard(hypixelAPI);
     }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(hudRenderer);
+        MinecraftForge.EVENT_BUS.register(leaderboard);
     }
 
     @Mod.EventHandler
     public void serverStarting(FMLServerStartingEvent event) {
-        event.registerServerCommand(new StatsCommand(hypixelAPI));
+        event.registerServerCommand(new StatsCommand(hypixelAPI, leaderboard));
     }
 
     @SubscribeEvent

@@ -1,9 +1,14 @@
 package com.bedwarsstats.api;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.LinkedBlockingQueue;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class ThirdPartyAPI implements StatProvider {
     private static final String API_URL = "https://api.thirdparty.com/player";
@@ -26,7 +31,6 @@ public class ThirdPartyAPI implements StatProvider {
             int attempts = 0;
             while (attempts < MAX_RETRIES) {
                 try {
-                    // Simulate API request
                     String response = makeApiRequest(playerName);
                     callback.onSuccess(parseStats(response));
                     return;
@@ -46,12 +50,32 @@ public class ThirdPartyAPI implements StatProvider {
     }
 
     private String makeApiRequest(String playerName) throws IOException {
-        // Simulate API request logic
-        return "{}"; // Placeholder response
+        URL url = new URL(API_URL + "?key=" + apiKey + "&name=" + playerName);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Accept", "application/json");
+
+        if (connection.getResponseCode() != 200) {
+            throw new IOException("Failed to fetch data: HTTP error code " + connection.getResponseCode());
+        }
+
+        InputStreamReader reader = new InputStreamReader(connection.getInputStream());
+        JsonObject response = JsonParser.parseReader(reader).getAsJsonObject();
+        reader.close();
+
+        return response.toString();
     }
 
     private PlayerStats parseStats(String response) {
-        // Simulate parsing logic
-        return new PlayerStats();
+        JsonObject jsonObject = JsonParser.parseString(response).getAsJsonObject();
+        JsonObject playerObject = jsonObject.getAsJsonObject("player");
+
+        PlayerStats stats = new PlayerStats();
+        stats.setPlayerName(playerObject.get("displayname").getAsString());
+        stats.setFkdr(playerObject.get("achievements").getAsJsonObject().get("bedwars_final_k_d").getAsDouble());
+        stats.setWins(playerObject.get("stats").getAsJsonObject().get("Bedwars").getAsJsonObject().get("wins_bedwars").getAsInt());
+        stats.setLosses(playerObject.get("stats").getAsJsonObject().get("Bedwars").getAsJsonObject().get("losses_bedwars").getAsInt());
+
+        return stats;
     }
 }

@@ -38,7 +38,7 @@ public class Leaderboard {
 
         int yOffset = -10;
         for (StatProvider.PlayerStats playerStats : topPlayers) {
-            String playerText = playerStats.getPlayerName() + ": " + playerStats.getFkdr();
+            String playerText = playerStats.getPlayerName() + ": FKDR=" + playerStats.getFkdr() + ", Wins=" + playerStats.getWins() + ", Losses=" + playerStats.getLosses();
             int textWidth = fontRenderer.getStringWidth(playerText);
             fontRenderer.drawStringWithShadow(playerText, -textWidth / 2, yOffset, 0xFFFFFF);
             yOffset += 10;
